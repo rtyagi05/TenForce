@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Text;
@@ -48,7 +49,7 @@ namespace Test_Taste_Console_Application.Domain.Services
             //If the planet doesn't have any moons, then it isn't added to the collection.
             foreach (var planet in results.Bodies)
             {
-                if(planet.Moons != null)
+                if (planet.Moons != null)
                 {
                     var newMoonsCollection = new Collection<MoonDto>();
                     foreach (var moon in planet.Moons)
@@ -62,7 +63,10 @@ namespace Test_Taste_Console_Application.Domain.Services
                     planet.Moons = newMoonsCollection;
 
                 }
-                allPlanetsWithTheirMoons.Add(new Planet(planet));
+               
+                
+                    allPlanetsWithTheirMoons.Add(new Planet(planet));
+                
             }
 
             return allPlanetsWithTheirMoons;
@@ -87,5 +91,53 @@ namespace Test_Taste_Console_Application.Domain.Services
                 .ToString()
                 .Normalize(NormalizationForm.FormC);
         }
+        internal static double CalculateAverageMoonGravity(ICollection<Moon> Moons,float SemiMajorAxis)
+        {
+            double AverageMoonGravity = 0.0f;
+            //adding this check because this will generate invalid data 
+            if (SemiMajorAxis > 0)
+            {
+                try
+                {
+                    //Moon Gravity 
+                    //g=(G*M)/R*R
+                    //Average moon gravity
+                    //g=(G*(M1+M2+....+Mn))/(R*R*n)
+                    //where n is the number of moons
+                    //G = 6.674×10-11 m3kg-1s-2
+                    double averageMass = CalculateAverageMassOfMoon(Moons);
+                    //calculate gravity
+                    //g=G*AverageMass
+                    AverageMoonGravity = (6.674 * Math.Pow(10, -11)) * averageMass;
+                    //g=(G*averageMass)/R*R
+                    AverageMoonGravity = AverageMoonGravity / Math.Pow(SemiMajorAxis, 2);
+                }
+                catch (ArithmeticException exp)
+                {
+                    Console.WriteLine(exp.Message);
+
+                }
+                catch (Exception exp)
+                {
+                    Console.WriteLine(exp.Message);
+
+                }
+            }
+            
+            return AverageMoonGravity;
+        }
+        private static double CalculateAverageMassOfMoon(ICollection<Moon> Moons)
+        {
+            double totalMass = 0;
+            //calculate M1+M2+....+Mn
+            foreach (Moon moon in Moons)
+            {
+                totalMass = totalMass + ((moon.MassValue) * Math.Pow(10, moon.MassExponent));
+            }
+            //average mass
+            return (totalMass / Moons.Count);
+
+        }
+
     }
 }
